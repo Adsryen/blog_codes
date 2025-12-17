@@ -1,0 +1,31 @@
+services:
+  namesrv:
+    image: apache/rocketmq:4.9.4
+    container_name: rmqnamesrv
+    ports:
+      - 9876:9876
+    command: sh mqnamesrv
+    environment:
+      - MAX_POSSIBLE_HEAP=100000000
+
+  broker:
+    image: apache/rocketmq:4.9.4
+    container_name: rmqbroker
+    ports:
+      - 10909:10909
+      - 10911:10911
+    command: sh mqbroker -n rmqnamesrv:9876
+    environment:
+      - NAMESRV_ADDR=rmqnamesrv:9876
+      - MAX_POSSIBLE_HEAP=200000000
+    depends_on:
+      - namesrv
+
+  app:
+    build: .
+    container_name: rocketmq_go_app
+    environment:
+      - NAMESRV_ADDR=rmqnamesrv:9876
+    depends_on:
+      - namesrv
+      - broker
